@@ -89,4 +89,4 @@ class ConsolePrintTool(BaseTool):
     
     async def execute(self, text: str) -> None:
         print("ConsolePrintTool: ", text)
-        return None 
+        return "Ok" 

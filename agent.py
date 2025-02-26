@@ -46,6 +46,10 @@ class Agent:
             
             tools_desc.append("\n".join(desc))
         return "\n\n".join(tools_desc)
+    
+    def _clear_memory(self) -> None:
+        """Очищает память агента."""
+        self.memory = []
         
     def _update_memory(self, role: str, content: Union[str, Dict, List, Any]) -> None:
         """Обновляет память агента."""
@@ -57,12 +61,13 @@ class Agent:
         self.memory.append({"role": role, "content": content})
         if len(self.memory) > self.memory_size:
             self.memory.pop(0)
+
+        logging.debug(f"\n\Добавлено в память\nRole: {role} \nContent: { pprint.pformat(content)}\n\n")
             
     def _create_messages(self, user_input: str) -> List[Dict[str, str]]:
         """Создает список сообщений для отправки модели."""
-        messages = [
-            {"role": "system", "content": self._create_system_prompt()}
-        ]
+        
+        messages = []
         messages.extend(self.memory)
         if user_input != None:
             messages.append({"role": "user", "content": user_input})
@@ -86,6 +91,7 @@ class Agent:
     "actions": [
         {{
             "tool": "название_инструмента",
+            // Если у инструмента есть параметры
             "params": {{
                 "параметр1": "значение1",
                 ...
@@ -109,7 +115,7 @@ class Agent:
     async def _execute_tool_call(self, tool_call: Dict) -> Any:
         """Выполняет один вызов инструмента."""
         tool_name = tool_call["tool"]
-        tool_params = tool_call["params"]
+        tool_params = tool_call.get("params", {})
         
         if tool_name not in self.tools:
             raise ValueError(f"Инструмент {tool_name} не найден")
@@ -117,19 +123,20 @@ class Agent:
         tool = self.tools[tool_name]
         result = await tool.execute(**tool_params)
         # Сохраняем результат выполнения инструмента в память
-        if result != None:
-            self._update_memory("user", {
-                "tool": tool_name,
-                "result": result
-            })
+        self._update_memory("user", {
+            "tool": tool_name,
+            "result": result
+        })
         return result
         
     async def run(self, user_input: str = None) -> str:
         """Запускает агента с заданным запросом."""
+
+        self._clear_memory()
+        self._update_memory("system", self._create_system_prompt())
         
         while True:
             messages = self._create_messages(user_input)
-            logging.debug(f"\n\nСообщения: { pprint.pformat(messages)}\n\n")
             try:
                 response = await self.client.chat.completions.create(
                     model=self.model,
@@ -142,7 +149,8 @@ class Agent:
             response_text = response.choices[0].message.content
             if user_input != None:
                 self._update_memory("user", user_input)
-            self._update_memory("assistant", response_text)
+            if response_text != None:
+                self._update_memory("assistant", response_text)
             
             try:
                 decision = json.loads(response_text)
