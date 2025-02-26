@@ -5,7 +5,7 @@ from tools import BaseTool
 import logging
 import pprint
 
-class Agent:
+class AI_Agent:
     def __init__(
         self,
         model: str,
