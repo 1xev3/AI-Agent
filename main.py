@@ -1,5 +1,5 @@
 import asyncio
-from agent import Agent
+from AI_Agent import Agent
 from tools import ConsolePrintTool, GetInfoTool
 from g4f.Provider import Blackbox
 import logging
