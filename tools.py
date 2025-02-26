@@ -61,10 +61,21 @@ class GetInfoTool(BaseTool):
     
     @property
     def description(self) -> str:
-        return "Возвращает тестовый массив чисел [1,2,3]"
+        return "Возвращает какую-то информацию"
     
     async def execute(self) -> List[int]:
-        return [1, 2, 3]
+        return {"menu": {
+            "id": "file",
+            "value": "File",
+            "popup": {
+                "menuitem": [
+                        {"value": "New", "onclick": "CreateNewDoc()"},
+                        {"value": "Open", "onclick": "OpenDoc()"},
+                        {"value": "Close", "onclick": "CloseDoc()"}
+                    ]
+                }
+            }}
+            
 
 class ConsolePrintTool(BaseTool):
     """Инструмент для вывода текста в консоль."""

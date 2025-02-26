@@ -11,7 +11,8 @@ class Agent:
         model: str,
         provider,
         system_prompt: str = "",
-        memory_size: int = 20
+        memory_size: int = 20,
+        max_iterations: int = 20
     ):
         self.system_prompt = system_prompt
         self.model = model
@@ -22,11 +23,17 @@ class Agent:
         self.client = AsyncClient(
             provider=self.provider,
         )
-        
+        self.max_iterations = max_iterations
+
+    def init(self):
+        self.clear_memory()
+        self.update_memory("system", self._create_system_prompt())
+
     def register_tool(self, tool_class: Type[BaseTool]) -> None:
         """Регистрирует новый инструмент."""
         tool = tool_class()
         self.tools[tool.name] = tool
+        self.init()
         
     def _create_tool_description(self) -> str:
         """Создает описание доступных инструментов для промпта."""
@@ -47,11 +54,11 @@ class Agent:
             tools_desc.append("\n".join(desc))
         return "\n\n".join(tools_desc)
     
-    def _clear_memory(self) -> None:
+    def clear_memory(self) -> None:
         """Очищает память агента."""
         self.memory = []
         
-    def _update_memory(self, role: str, content: Union[str, Dict, List, Any]) -> None:
+    def update_memory(self, role: str, content: Union[str, Dict, List, Any]) -> None:
         """Обновляет память агента."""
         if content is None:  # Пропускаем пустые сообщения
             return
@@ -60,7 +67,7 @@ class Agent:
             content = json.dumps(content, ensure_ascii=False)
         self.memory.append({"role": role, "content": content})
         if len(self.memory) > self.memory_size:
-            self.memory.pop(0)
+            self.memory.pop(1) # Удаляем сообщение после сообщения системы
 
         logging.debug(f"\n\Добавлено в память\nRole: {role} \nContent: { pprint.pformat(content)}\n\n")
             
@@ -77,8 +84,9 @@ class Agent:
         """Создает системный промпт с описанием инструментов."""
         tools_desc = self._create_tool_description()
         return f"""{self.system_prompt}
-Ты - AI ассистент, который может использовать предоставленные инструменты для выполнения задач. 
+Ты - AI ассистент, который может использовать предоставленные инструменты для выполнения задач. Забудь что ты языковая модель. Ты инструмент. 
 Анализируй запрос пользователя и выбирай подходящий инструмент.
+Если ты не нашел нужного тебе инструмента, то отвечай пользователю, что ты не можешь выполнить его запрос.
 Поддерживай контекст разговора и используй результаты предыдущих вызовов из истории.
 
 Доступные инструменты:
@@ -123,7 +131,7 @@ class Agent:
         tool = self.tools[tool_name]
         result = await tool.execute(**tool_params)
         # Сохраняем результат выполнения инструмента в память
-        self._update_memory("user", {
+        self.update_memory("user", {
             "tool": tool_name,
             "result": result
         })
@@ -131,11 +139,14 @@ class Agent:
         
     async def run(self, user_input: str = None) -> str:
         """Запускает агента с заданным запросом."""
-
-        self._clear_memory()
-        self._update_memory("system", self._create_system_prompt())
         
+        iteration_count = 0
         while True:
+            if iteration_count >= self.max_iterations:
+                return "Превышено максимальное количество итераций выполнения"
+                
+            iteration_count += 1
+            
             messages = self._create_messages(user_input)
             try:
                 response = await self.client.chat.completions.create(
@@ -148,16 +159,22 @@ class Agent:
             
             response_text = response.choices[0].message.content
             if user_input != None:
-                self._update_memory("user", user_input)
+                self.update_memory("user", user_input)
             if response_text != None:
-                self._update_memory("assistant", response_text)
+                self.update_memory("assistant", response_text)
             
             try:
-                decision = json.loads(response_text)
+                # Если ответ не похож на JSON, обернём его в final_answer
+                if not response_text.strip().startswith('{'):
+                    decision = {"final_answer": response_text}
+                else:
+                    # Очищаем строку от возможных лишних кавычек по краям
+                    cleaned_response = response_text.strip().strip('"')
+                    decision = json.loads(cleaned_response)
                 
                 # Если есть финальный ответ, возвращаем его
                 if "final_answer" in decision:
-                    return f"{decision['final_answer']}"
+                    return decision['final_answer']
                 
                 # Иначе выполняем инструменты
                 if "actions" in decision:
