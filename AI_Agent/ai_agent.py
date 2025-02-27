@@ -1,7 +1,7 @@
 import json
 from typing import Dict, List, Type, Optional, Any, Union
 from g4f.client import AsyncClient
-from tools import BaseTool
+from .tool_base import BaseTool
 import logging
 import pprint
 
@@ -31,7 +31,7 @@ class AI_Agent:
 
     def register_tool(self, tool_class: Type[BaseTool]) -> None:
         """Регистрирует новый инструмент."""
-        tool = tool_class()
+        tool = tool_class
         self.tools[tool.name] = tool
         self.init()
         

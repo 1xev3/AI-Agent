@@ -1,12 +1,13 @@
 import asyncio
 from AI_Agent import AI_Agent
-from tools import ConsolePrintTool, GetInfoTool, GoogleCalendarTool
+from tools import ConsolePrintTool, GetInfoTool
 from g4f.Provider import Blackbox
 from settings import settings
 import logging
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+logger.info("Starting the application")
 
 async def main():
     # Создаем агента с базовым системным промптом
@@ -18,15 +19,8 @@ async def main():
     )
     
     # Регистрируем инструменты
-    agent.register_tool(GetInfoTool)
-    agent.register_tool(ConsolePrintTool)
-    agent.register_tool(GoogleCalendarTool(
-        provider=provider, 
-        model=model, 
-        calendar_id=settings.GOOGLE_CALENDAR_ID,
-        credentials=settings.GOOGLE_CALENDAR_TOKEN
-    ))
-    
+    agent.register_tool(GetInfoTool())
+    agent.register_tool(ConsolePrintTool())
     
     while True:
         user_input = input("Enter your query: ")
