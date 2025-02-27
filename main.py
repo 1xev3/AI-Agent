@@ -12,7 +12,7 @@ logger.info("Starting the application")
 async def main():
     # Создаем агента с базовым системным промптом
     provider = Blackbox
-    model = "gemini-1.5-flash"#"mixtral-small-28b",
+    model = "llama-3.1-8b"#"gemini-1.5-flash"#"mixtral-small-28b",
     agent = AI_Agent(
         provider=provider,
         model=model

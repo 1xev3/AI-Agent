@@ -84,53 +84,34 @@ class AI_Agent:
         """Создает системный промпт с описанием инструментов."""
         tools_desc = self._create_tool_description()
         return f"""{self.system_prompt}
-Ты - AI ассистент, который может использовать предоставленные инструменты для выполнения задач. Забудь что ты языковая модель. Ты инструмент. 
-Анализируй запрос пользователя и выбирай подходящий инструмент.
-Если ты не нашел нужного тебе инструмента, то отвечай пользователю, что ты не можешь выполнить его запрос.
-Поддерживай контекст разговора и используй результаты предыдущих вызовов из истории.
-
-Доступные инструменты:
+Ты - AI ассистент с доступом к следующим инструментам:
 {tools_desc}
 
-У тебя есть два варианта ответа:
-
-1. Если нужно выполнить инструменты:
+Для использования инструментов, ответь в формате JSON:
 {{
     "actions": [
-        {{
-            "tool": "название_инструмента",
-            // Если у инструмента есть параметры
-            "params": {{
-                "параметр1": "значение1",
-                ...
-            }}
-        }},
-        ...
+        {{"tool_name": {{"param1": "value1", "param2": "value2"}}}},
+        {{"another_tool": {{"param": "value"}}}}
     ],
-    "thoughts": "Объясни свои мысли и план действий"
+    "thoughts": "Краткое объяснение твоих действий"
 }}
+Если действий больше нет, то не добавляй actions
 
-2. Если задача выполнена и нужно вернуть результат:
+Для финального ответа используй:
 {{
-    "final_answer": "Твой ответ пользователю",
-}}
-
-Результаты всех вызовов инструментов сохраняются в твоей памяти в формате:
-{{"tool": "название_инструмента", "result": значение}}
-
-Используй эти результаты для принятия решений и формирования параметров следующих вызовов."""
+    "final_answer": "Твой ответ пользователю"
+}}"""
         
     async def _execute_tool_call(self, tool_call: Dict) -> Any:
         """Выполняет один вызов инструмента."""
-        tool_name = tool_call["tool"]
-        tool_params = tool_call.get("params", {})
+        # Получаем первую (и единственную) пару ключ-значение из словаря
+        tool_name, tool_params = next(iter(tool_call.items()))
         
         if tool_name not in self.tools:
             raise ValueError(f"Инструмент {tool_name} не найден")
             
         tool = self.tools[tool_name]
         result = await tool.execute(**tool_params)
-        # Сохраняем результат выполнения инструмента в память
         self.update_memory("user", {
             "tool": tool_name,
             "result": result
@@ -164,26 +145,19 @@ class AI_Agent:
                 self.update_memory("assistant", response_text)
             
             try:
-                # Если ответ не похож на JSON, обернём его в final_answer
                 if not response_text.strip().startswith('{'):
                     decision = {"final_answer": response_text}
                 else:
-                    # Очищаем строку от возможных лишних кавычек по краям
                     cleaned_response = response_text.strip().strip('"')
                     decision = json.loads(cleaned_response)
                 
-                # Если есть финальный ответ, возвращаем его
                 if "final_answer" in decision:
                     return decision['final_answer']
                 
-                # Иначе выполняем инструменты
                 if "actions" in decision:
-
                     for tool_call in decision["actions"]:
                         await self._execute_tool_call(tool_call)
-                    
-                    # Продолжаем цикл с новым контекстом
-                    user_input = None #"Продолжи выполнение задачи с учетом полученных результатов."
+                    user_input = None
                     continue
                     
             except json.JSONDecodeError:

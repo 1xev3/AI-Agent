@@ -13,4 +13,4 @@ class GetInfoTool(BaseTool):
         return "Возвращает какую-то информацию"
     
     async def execute(self) -> List[int]:
-        return {"msg": "Я ебал твой рот"}
+        return [5, 2, 3]
