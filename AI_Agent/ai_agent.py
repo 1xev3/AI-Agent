@@ -25,7 +25,13 @@ class AI_Agent:
         )
         self.max_iterations = max_iterations
 
+    def update_system_prompt(self, new_prompt: str) -> None:
+        """Updates system prompt and reinitializes the agent"""
+        self.system_prompt = new_prompt
+        self.init()
+
     def init(self):
+        """Initializes or reinitializes the agent with current system prompt"""
         self.clear_memory()
         self.update_memory("system", self._create_system_prompt())
 
@@ -69,7 +75,7 @@ class AI_Agent:
         if len(self.memory) > self.memory_size:
             self.memory.pop(1) # Удаляем сообщение после сообщения системы
 
-        logging.debug(f"\n\Добавлено в память\nRole: {role} \nContent: { pprint.pformat(content)}\n\n")
+        # logging.debug(f"\n\Добавлено в память\nRole: {role} \nContent: { pprint.pformat(content)}\n\n")
             
     def _create_messages(self, user_input: str) -> List[Dict[str, str]]:
         """Создает список сообщений для отправки модели."""
@@ -87,7 +93,7 @@ class AI_Agent:
 Ты - AI ассистент с доступом к следующим инструментам:
 {tools_desc}
 
-Для использования инструментов, ответь в формате JSON:
+Для использования инструментов, ответь в формате JSON (только один основной JSON-объект):
 {{
     "actions": [
         {{"tool_name": {{"param1": "value1", "param2": "value2"}}}},
@@ -97,10 +103,7 @@ class AI_Agent:
 }}
 Если действий больше нет, то не добавляй actions
 
-Для финального ответа используй:
-{{
-    "final_answer": "Твой ответ пользователю"
-}}
+Для финального ответа можешь просто написать без всяких JSON структур:
 
 Результат инструментов сохраняется в памяти в формате {{"tool": "название_инструмента", "result": значение}}"""
         
@@ -166,4 +169,5 @@ class AI_Agent:
                 return f"Ошибка: неверный формат ответа от модели: {response_text}"
             except Exception as e:
                 logging.error(f"Ошибка при выполнении: {str(e)}")
+                raise e
                 return f"Ошибка при выполнении: {str(e)}" 
