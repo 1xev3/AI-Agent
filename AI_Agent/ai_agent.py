@@ -90,22 +90,27 @@ class AI_Agent:
         """Создает системный промпт с описанием инструментов."""
         tools_desc = self._create_tool_description()
         return f"""{self.system_prompt}
-Ты - AI ассистент с доступом к следующим инструментам:
+You are an AI assistant with access to the following tools:
+## Tools:
 {tools_desc}
 
-Для использования инструментов, ответь в формате JSON (только один основной JSON-объект):
+## Rules:
+To use tools, respond in JSON format (only one main JSON object):
 {{
     "actions": [
         {{"tool_name": {{"param1": "value1", "param2": "value2"}}}},
         {{"another_tool": {{"param": "value"}}}}
     ],
-    "thoughts": "Краткое объяснение твоих действий"
+    "thoughts": "Brief explanation of your actions"
 }}
-Если действий больше нет, то не добавляй actions
-
-Для финального ответа можешь просто написать без всяких JSON структур:
-
-Результат инструментов сохраняется в памяти в формате {{"tool": "название_инструмента", "result": значение}}"""
+To use final answer, respond:
+{{
+    "final_answer": "your text"
+}}
+Do not respond with both actions and final_answer at the same time!
+If there are no more actions, do not add actions
+Tool results are stored in memory in the format {{"tool": "tool_name", "result": value}}
+Always respond in User language!"""
         
     async def _execute_tool_call(self, tool_call: Dict) -> Any:
         """Выполняет один вызов инструмента."""
@@ -169,5 +174,6 @@ class AI_Agent:
                 return f"Ошибка: неверный формат ответа от модели: {response_text}"
             except Exception as e:
                 logging.error(f"Ошибка при выполнении: {str(e)}")
+                self.update_memory("user", f"Ошибка при выполнении: {str(e)}")
                 raise e
                 return f"Ошибка при выполнении: {str(e)}" 

@@ -122,24 +122,24 @@ class GetAllRemindersTool(BaseTool):
 
 class ReminderAgentTool(BaseTool):
     def __init__(self, model: str, provider: str):
-        self.base_system_prompt = """Ты - ассистент по управлению напоминаниями.
-            
-            Для создания напоминания:
-            1. Извлеки текст и время из запроса пользователя
-            2. Если указано "через X часов/минут" - рассчитай точное время от текущего момента
-            3. Если указано "завтра" - используй дату следующего дня
-            4. Используй инструмент create_reminder с извлеченными данными
-            
-            Для удаления напоминания:
-            1. Сначала используй get_all_reminders для получения списка всех напоминаний
-            2. Найди напоминание, текст которого наиболее соответствует запросу пользователя
-            3. Используй delete_reminder с ID найденного напоминания
-            
-            Для просмотра напоминаний:
-            1. Используй get_all_reminders
-            2. Отформатируй список напоминаний для удобного чтения
-            
-            Всегда подтверждай пользователю результат операции."""
+        self.base_system_prompt = """You are a reminder management assistant. Always respond in User language!
+        
+For creating a reminder:
+1. Extract text and time from user request
+2. If "in X hours/minutes" is specified - calculate exact time from current moment
+3. If "tomorrow" is specified - use next day's date
+4. Use create_reminder tool with extracted data
+
+For deleting a reminder:
+1. First use get_all_reminders to get list of all reminders
+2. Find reminder whose text best matches user request
+3. Use delete_reminder with ID of found reminder
+
+For viewing reminders:
+1. Use get_all_reminders
+2. Format reminder list for easy reading
+
+Always confirm operation result to user."""
         
         self.agent = AI_Agent(
             model=model,
@@ -167,10 +167,10 @@ class ReminderAgentTool(BaseTool):
     @property
     def description(self) -> str:
         return """Manages reminders using natural language commands. Examples:
-        - "Напомни мне через 3 часа купить молоко"
-        - "Создай напоминалку на завтра 15:00 про встречу"
-        - "Удали напоминание про встречу"
-        - "Покажи все мои напоминания" """
+        - "Remind me to buy milk in 3 hours"
+        - "Create a reminder for tomorrow at 15:00 about the meeting"
+        - "Delete the reminder about the meeting"
+        - "Show all my reminders" """
     
     @property
     def parameters(self) -> List[ToolParameter]:
@@ -221,7 +221,7 @@ class ReminderChecker:
     async def _check_reminders(self, session: Session):
         """Main loop for checking reminders"""
         while self._running:
-            logger.debug("Checking reminders")
+            # logger.debug("Checking reminders")
             try:
                 due_reminders = Reminder.get_due_reminders(session)
                 for reminder in due_reminders:
