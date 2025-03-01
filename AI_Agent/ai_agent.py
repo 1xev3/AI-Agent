@@ -171,9 +171,10 @@ Always respond in User language!"""
                     continue
                     
             except json.JSONDecodeError:
+                self.update_memory("user", f"ERROR: Bad answer from AI Model: {response_text}")
                 return f"Ошибка: неверный формат ответа от модели: {response_text}"
             except Exception as e:
                 logging.error(f"Ошибка при выполнении: {str(e)}")
-                self.update_memory("user", f"Ошибка при выполнении: {str(e)}")
+                self.update_memory("user", f"Error: {str(e)}")
                 raise e
                 return f"Ошибка при выполнении: {str(e)}" 

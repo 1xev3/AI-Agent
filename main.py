@@ -1,6 +1,6 @@
 import asyncio
 from AI_Agent import AI_Agent
-from tools import ConsolePrintTool, GetInfoTool, ReminderAgentTool
+from tools import ReminderAgentTool, TodoAgentTool
 from g4f.Provider import Blackbox
 from settings import settings
 from database.db import db 
@@ -45,9 +45,8 @@ async def main():
     )
     
     # Регистрируем инструменты
-    agent.register_tool(GetInfoTool())
-    agent.register_tool(ConsolePrintTool())
     agent.register_tool(ReminderAgentTool(model=model, provider=provider))
+    agent.register_tool(TodoAgentTool(model=model, provider=provider))
     
     logger.info("AI Agent initialized with all tools")
     
