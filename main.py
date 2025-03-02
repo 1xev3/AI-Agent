@@ -1,5 +1,6 @@
 import asyncio
-from AI_Agent import AI_Agent
+from AI_Agent import AI_Agent, AI_Client, AIMessageStorage
+
 from tools import ReminderAgentTool, TodoAgentTool
 from g4f.Provider import Blackbox
 from settings import settings
@@ -32,33 +33,41 @@ async def main():
     async def reminder_callback(reminder: Reminder):
         print(f"\n🔔 НАПОМИНАНИЕ: {reminder.text}")
     
-    # Создаем и запускаем checker напоминаний
-    reminder_checker = ReminderChecker(callback=reminder_callback, check_interval=30)  # Проверка каждые 30 секунд
-    await reminder_checker.start()
-    
-    # Создаем агента с базовым системным промптом
-    provider = Blackbox
-    model = "llama-3.1-8b"#"gemini-1.5-flash"#"mixtral-small-28b",
-    agent = AI_Agent(
-        provider=provider,
-        model=model
-    )
-    
-    # Регистрируем инструменты
-    agent.register_tool(ReminderAgentTool(model=model, provider=provider))
-    agent.register_tool(TodoAgentTool(model=model, provider=provider))
-    
-    logger.info("AI Agent initialized with all tools")
-    
     try:
+        # Создаем и запускаем checker напоминаний
+        reminder_checker = ReminderChecker(callback=reminder_callback, check_interval=30)
+        await reminder_checker.start()
+        
+        # Создаем агента с базовым системным промптом
+        provider = Blackbox
+        model = "llama-3.1-8b"
+        client = AI_Client(model=model, provider=provider)
+        message_storage = AIMessageStorage(max_size=20)
+        agent = AI_Agent(
+            client=client,
+            message_storage=message_storage
+        )
+        
+        # Регистрируем инструменты
+        logger.debug("Registering ReminderAgentTool...")
+        agent.register_tool(ReminderAgentTool(client=client))
+        logger.debug("Registering TodoAgentTool...")
+        agent.register_tool(TodoAgentTool(client=client))
+        
+        logger.info("AI Agent initialized with all tools")
+        
         while True:
             try:
                 user_input = await async_input("Enter your query: ")
+                logger.debug(f"Processing user input: {user_input}")
                 result = await agent.run(user_input)
                 print("Result: ", result)
             except Exception as e:
-                logger.error(f"Error processing query: {e}")
-                print(f"An error occurred: {e}")
+                logger.error(f"Error processing query: {str(e)}", exc_info=True)
+                print(f"An error occurred: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error in main loop: {str(e)}", exc_info=True)
+        raise
     finally:
         await reminder_checker.stop()
 
