@@ -1,14 +1,14 @@
 import asyncio
 from AI_Agent import AI_Agent, AI_Client, AIMessageStorage
 
-from tools import ReminderAgentTool, TodoAgentTool
+from tools import ReminderAgentTool, TodoAgentTool, SearchAgentTool
 from g4f.Provider import Blackbox
 from settings import settings
 from database.db import db 
 import logging
 from tools.reminder_tool import ReminderChecker, Reminder
 
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logger.info("Starting the application")
 
@@ -53,6 +53,8 @@ async def main():
         agent.register_tool(ReminderAgentTool(client=client))
         logger.debug("Registering TodoAgentTool...")
         agent.register_tool(TodoAgentTool(client=client))
+        logger.debug("Registering SearchAgentTool...")
+        agent.register_tool(SearchAgentTool(client=client))
         
         logger.info("AI Agent initialized with all tools")
         

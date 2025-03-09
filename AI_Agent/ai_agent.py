@@ -9,7 +9,7 @@ from .ai_message_storage import AIMessageStorage
 from .tool_base import BaseTool
 
 # System prompt template
-SYSTEM_PROMPT_TEMPLATE = """
+SYSTEM_PROMPT_TEMPLATE = """Always respond in User language!
 {who_am_i}
 You have access to the following tools:
 ## Tools:
@@ -30,8 +30,7 @@ To use final answer, respond:
 }}
 Do not respond with both actions and final_answer at the same time!
 If there are no more actions, do not add actions
-Tool results are stored in memory in the format {{"tool": "tool_name", "result": value}}
-Always respond in User language!"""
+Tool results are stored in memory in the format {{"tool": "tool_name", "result": value}}"""
 
 class AI_Agent:
     def __init__(
