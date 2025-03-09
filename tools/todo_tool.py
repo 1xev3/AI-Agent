@@ -50,7 +50,8 @@ class CreateTodoTool(BaseTool):
             description="Detailed description of the todo item"
         )
     ]
-    
+    returns = "Result of action"
+
     @with_session
     async def execute(self, title: str, description: str, session: Session) -> Dict:
         todo_id = f"todo_{uuid.uuid4().hex[:8]}"
@@ -89,6 +90,7 @@ class UpdateTodoTool(BaseTool):
             description="New description of the todo item"
         )
     ]
+    returns = "Result of action"
     
     @with_session
     async def execute(self, todo_id: str, title: str, description: str, session: Session) -> Dict:
@@ -123,6 +125,7 @@ class DeleteTodoTool(BaseTool):
             description="ID of the todo to delete"
         )
     ]
+    returns = "Result of action"
     
     @with_session
     async def execute(self, todo_id: str, session: Session) -> Dict:
@@ -145,6 +148,7 @@ class GetAllTodosTool(BaseTool):
     name = "get_all_todos"
     description = "Returns all existing todos"
     parameters = []
+    returns = "List of todos"
     
     @with_session
     async def execute(self, session: Session) -> List[Dict]:
@@ -166,6 +170,7 @@ class TodoAgentTool(BaseTool):
         )
     ]
     description = """Manages TODO list using natural language commands"""
+    returns = "Result of action"
 
     def __init__(self, client: AI_Client):        
         self.agent = AI_Agent(

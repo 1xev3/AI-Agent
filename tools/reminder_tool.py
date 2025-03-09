@@ -52,6 +52,7 @@ class CreateReminderTool(BaseTool):
             description="Datetime for the reminder in format YYYY-MM-DD HH:MM"
         )
     ]
+    returns = "Result of action"
     
     @with_session
     async def execute(self, text: str, datetime_str: str, session: Session) -> Dict:
@@ -82,6 +83,7 @@ class DeleteReminderTool(BaseTool):
             description="ID of the reminder to delete"
         )
     ]
+    returns = "Result of action"
     
     @with_session
     async def execute(self, reminder_id: str, session: Session) -> Dict:
@@ -101,6 +103,7 @@ class GetAllRemindersTool(BaseTool):
     name = "get_all_reminders"
     description = "Returns all existing reminders"
     parameters = []
+    returns = "List of reminders"
     
     @with_session
     async def execute(self, session: Session) -> List[Dict]:
@@ -121,6 +124,7 @@ class ReminderAgentTool(BaseTool):
             description="Natural language request for managing reminders"
         )
     ]
+    returns = "Result of action"
 
     def __init__(self, client: AI_Client):        
         self.agent = AI_Agent(

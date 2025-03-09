@@ -8,7 +8,15 @@ class ToolParameter:
     name: str
     type: str
     description: str
-    required: bool = True
+
+    def to_string(self) -> str:
+        """Преобразовать параметр в строку."""
+        return f"Arg: {self.name} Type: {self.type} Description:{self.description})"
+
+BASE_TOOL_PROMPT = """Tool: {name}
+Description: {description}
+Args: {args}
+Returns: {returns}"""
 
 class BaseTool(ABC):
     """Базовый класс для всех инструментов."""
@@ -30,10 +38,28 @@ class BaseTool(ABC):
         """Описание параметров инструмента."""
         return []
     
+    @property
+    def returns(self) -> str:
+        """Описание возвращаемых значений инструмента."""
+        return "Any"
+    
     @abstractmethod
     async def execute(self, **kwargs) -> Any:
         """Выполнить инструмент с заданными параметрами."""
         pass
+
+    def to_string(self) -> str:
+        """Преобразовать информацию об инструменте в строку."""
+        params_str = ""
+        for param in self.parameters:
+            params_str += param.to_string()
+
+        return BASE_TOOL_PROMPT.format(
+            name=self.name,
+            description=self.description,
+            args=params_str,
+            returns=self.returns
+        )
     
     def to_dict(self) -> Dict[str, Any]:
         """Преобразовать информацию об инструменте в словарь."""

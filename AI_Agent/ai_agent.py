@@ -73,19 +73,8 @@ class AI_Agent:
         """Создает описание доступных инструментов для промпта."""
         tools_desc = []
         for tool in self.tools.values():
-            tool_info = tool.to_dict()
-            desc = [
-                f"Tool: {tool_info['name']}",
-                f"Description: {tool_info['description']}"
-            ]
-            
-            if tool_info['parameters']:
-                desc.append("Parameters:")
-                for param in tool_info['parameters']:
-                    required = "required" if param['required'] else "optional"
-                    desc.append(f"  - {param['name']} ({param['type']}, {required}): {param['description']}")
-            
-            tools_desc.append("\n".join(desc))
+            tool_info = tool.to_string()
+            tools_desc.append("\n".join(tool_info))
         return "\n\n".join(tools_desc)
     
     def clear_memory(self) -> None:
