@@ -47,6 +47,7 @@ class SearchInternetTool(BaseTool):
 "description"}]"""
 
     async def execute(self, query: str, max_results: int = 4) -> List[Dict]:
+        logger.info(f"Searching internet for: {query}")
         try:
             # Create new DDGS instance with timeout and retries
             with DDGS() as ddgs:
@@ -57,8 +58,6 @@ class SearchInternetTool(BaseTool):
                     logger.warning(f"Regular search failed, trying alternative method: {e}")
                     # Try alternative search method
                     results = list(ddgs.news(query, max_results=max_results))
-
-                logger.debug(f"Search results: {results}")
 
                 if not results:
                     logger.warning("No results found")

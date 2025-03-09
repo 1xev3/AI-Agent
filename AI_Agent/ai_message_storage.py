@@ -39,6 +39,11 @@ class AIMessageStorage:
     
     def clear_messages(self):
         self.messages = self.messages[:1]
+
+    def clone(self):
+        msg_storage = AIMessageStorage(max_size=self.max_size, system_prompt=self.system_prompt)
+        msg_storage.messages = self.messages
+        return msg_storage
     
     def load_from_db(self, user_id: str, session: Session):
         pass
