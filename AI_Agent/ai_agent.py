@@ -73,8 +73,8 @@ class AI_Agent:
         tools_desc = []
         for tool in self.tools.values():
             tool_info = tool.to_string()
-            tools_desc.append("\n".join(tool_info))
-        return "\n\n".join(tools_desc)
+            tools_desc.append(tool_info)
+        return "\n".join(tools_desc)
     
     def clear_memory(self) -> None:
         """Очищает память агента."""

@@ -11,11 +11,11 @@ class ToolParameter:
 
     def to_string(self) -> str:
         """Преобразовать параметр в строку."""
-        return f"Arg: {self.name} Type: {self.type} Description:{self.description})"
+        return f"{self.name}: {self.type} | {self.description})"
 
 BASE_TOOL_PROMPT = """Tool: {name}
 Description: {description}
-Args: {args}
+Parameters: {parameters}
 Returns: {returns}"""
 
 class BaseTool(ABC):
@@ -50,14 +50,12 @@ class BaseTool(ABC):
 
     def to_string(self) -> str:
         """Преобразовать информацию об инструменте в строку."""
-        params_str = ""
-        for param in self.parameters:
-            params_str += param.to_string()
+        params_str = " ".join([param.to_string() for param in self.parameters])
 
         return BASE_TOOL_PROMPT.format(
             name=self.name,
             description=self.description,
-            args=params_str,
+            parameters=params_str,
             returns=self.returns
         )
     

@@ -3,6 +3,7 @@ import logging
 import asyncio
 from typing import Dict, List, Optional
 from urllib.parse import urlparse
+from pprint import pformat
 
 # Third party imports
 from bs4 import BeautifulSoup
@@ -22,16 +23,17 @@ For searching:
 3. Combine and analyze information from multiple sources to provide a comprehensive answer
 
 Important:
-- Always check page content for the most relevant results to ensure accuracy
-- Use get_page_content for at least 2-3 most relevant search results
+- Always check page content with get_page_content tool for the most relevant results to ensure accuracy
 - Provide sources and quote relevant parts from the retrieved content
 - If the content is not relevant, try another search result
+- Try to ask in another way (reinvoke search_internet tool) if you can't find what you need
+- If in the end nothing useful is found, return "Nothing useful found"
 
 Always provide sources of information in your response."""
 
 class SearchInternetTool(BaseTool):
     name = "search_internet"
-    description = "Searches the internet using DuckDuckGo"
+    description = "Internet search tool" 
     parameters = [
         ToolParameter(
             name="query",
@@ -39,9 +41,12 @@ class SearchInternetTool(BaseTool):
             description="Search query"
         )
     ]
-    returns = "List of search results with titles and URLs"
+    returns = """[{
+"title",
+"url",
+"description"}]"""
 
-    async def execute(self, query: str, max_results: int = 1) -> List[Dict]:
+    async def execute(self, query: str, max_results: int = 4) -> List[Dict]:
         try:
             # Create new DDGS instance with timeout and retries
             with DDGS() as ddgs:
@@ -121,7 +126,7 @@ class SearchAgentTool(BaseTool):
         ToolParameter(
             name="request",
             type="string",
-            description="Natural language search request. Write what you want: to search or to get page content"
+            description="Query for the search. Write what you want: to search or to get page content"
         )
     ]
     returns = "Search results and analysis"
@@ -137,7 +142,7 @@ class SearchAgentTool(BaseTool):
         self.agent.register_tool(GetPageContentTool())
 
     async def execute(self, request: str) -> str:
-        self.agent.clear_messages()
-        self.agent.update_who_am_i(WHO_AM_I)
         logger.info(f"Running agent with request: {request}")
-        return await self.agent.run(request) 
+        result = await self.agent.run(request) 
+        # logger.info(f"Agent result: { pformat(self.agent.message_storage.get_messages_as_dict())}")
+        return result

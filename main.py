@@ -8,7 +8,14 @@ from database.db import db
 import logging
 from tools.reminder_tool import ReminderChecker, Reminder
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(),
+        # logging.FileHandler('app.log', encoding='utf-8')
+    ]
+)
 logger = logging.getLogger(__name__)
 logger.info("Starting the application")
 
@@ -66,7 +73,6 @@ async def main():
                 print("Result: ", result)
             except Exception as e:
                 logger.error(f"Error processing query: {str(e)}", exc_info=True)
-                print(f"An error occurred: {str(e)}")
     except Exception as e:
         logger.error(f"Error in main loop: {str(e)}", exc_info=True)
         raise

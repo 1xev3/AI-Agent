@@ -47,7 +47,7 @@ class CreateReminderTool(BaseTool):
             description="Text of the reminder"
         ),
         ToolParameter(
-            name="datetime_str",
+            name="date_time_str",
             type="string",
             description="Datetime for the reminder in format YYYY-MM-DD HH:MM"
         )
@@ -55,9 +55,9 @@ class CreateReminderTool(BaseTool):
     returns = "Result of action"
     
     @with_session
-    async def execute(self, text: str, datetime_str: str, session: Session) -> Dict:
+    async def execute(self, text: str, date_time_str: str, session: Session) -> Dict:
         reminder_id = f"rem_{uuid.uuid4().hex[:8]}"  # Увеличили длину ID для уникальности
-        reminder_time = datetime.strptime(datetime_str, "%Y-%m-%d %H:%M")
+        reminder_time = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
         
         reminder = Reminder(
             id=reminder_id,
@@ -146,10 +146,7 @@ class ReminderAgentTool(BaseTool):
         # Update system prompt with current time before each execution
         self.agent.clear_messages()
         self.agent.update_who_am_i(self._get_system_prompt())
-        from pprint import pprint
-        # pprint(self.agent.message_storage.get_messages_as_dict())
         res = await self.agent.run(request)
-        pprint(self.agent.message_storage.get_messages_as_dict())
         return res
 
 
