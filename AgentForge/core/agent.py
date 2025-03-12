@@ -98,12 +98,11 @@ class Agent:
         )
         
     async def _execute_tool_call(self, tool_call: Dict) -> Any:
-        """Выполняет один вызов инструмента."""
-        # Получаем первую (и единственную) пару ключ-значение из словаря
+        """Executes a single tool call."""
         tool_name, tool_params = next(iter(tool_call.items()))
         
         if tool_name not in self.tools:
-            raise ValueError(f"Инструмент {tool_name} не найден")
+            raise ValueError(f"Tool {tool_name} not found")
             
         tool = self.tools[tool_name]
         result = await tool.execute(**tool_params)
@@ -119,7 +118,7 @@ class Agent:
         iteration_count = 0
         while True:
             if iteration_count >= self.max_iterations:
-                return "Превышено максимальное количество итераций выполнения"
+                return "Maximum number of iterations exceeded"
             iteration_count += 1
             
             # Add user input only once at the beginning of iteration
@@ -152,9 +151,9 @@ class Agent:
                         
                 except json.JSONDecodeError:
                     self.message_storage.add_message("user", f"ERROR: Bad answer from AI Model: {response_text}")
-                    return f"Ошибка: неверный формат ответа от модели: {response_text}"
+                    return f"Error: bad answer from model: {response_text}"
                 
             except Exception as e:
-                logging.error(f"Ошибка при выполнении: {str(e)}")
+                logging.error(f"Error: {str(e)}")
                 self.message_storage.add_message("user", f"Error: {str(e)}")
                 raise e 

@@ -37,7 +37,7 @@ class Database:
 db = Database()
 
 def with_session(func):
-    """Декоратор для автоматического управления сессией"""
+    """Decorator for automatic session management"""
     @functools.wraps(func)
     async def wrapper(*args, **kwargs):
         with db.get_session() as session:

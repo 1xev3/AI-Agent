@@ -1,4 +1,4 @@
-# 🤖 Agent Framework
+# 🤖 AgentForge
 
 A flexible framework for building AI agents with tools and database support. This framework allows you to create AI assistants that can use various tools and maintain conversation history.
 

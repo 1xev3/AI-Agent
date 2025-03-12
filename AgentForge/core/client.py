@@ -1,7 +1,7 @@
 from typing import List, Dict, Any, Optional
 
 class AIClient:
-    """Базовый класс для работы с LLM."""
+    """Base class for working with LLM."""
     
     def __init__(self, model: str = None, provider: Any = None):
         self.model = model
@@ -9,19 +9,19 @@ class AIClient:
     
     async def generate_message(self, messages: List[Dict[str, str]]) -> str:
         """
-        Генерирует ответ от модели на основе сообщений.
+        Generates an answer from the model based on messages.
         
         Args:
-            messages: Список сообщений в формате [{"role": "...", "content": "..."}]
+            messages: List of messages in the format [{"role": "...", "content": "..."}]
             
         Returns:
-            str: Ответ модели
+            str: Model answer
         """
         raise NotImplementedError("Subclasses must implement generate_message")
 
 
 class G4FClient(AIClient):
-    """Клиент для работы с g4f."""
+    """Client for working with g4f."""
     
     def __init__(self, model: str, provider: Any):
         super().__init__(model, provider)
