@@ -9,9 +9,11 @@ from typing import Dict, List, Callable
 from sqlalchemy.orm import Session
 
 # Local imports
-from AI_Agent import BaseTool, ToolParameter, AI_Agent, AI_Client, AIMessageStorage
-from database.db import with_session
-from database.models import Reminder
+from AgentForge.core.tool_base import BaseTool, ToolParameter
+from AgentForge.core.agent import Agent
+from AgentForge.core.message_storage import MessageStorage
+from AgentForge.database.db import with_session
+from AgentForge.database.models import Reminder
 
 logger = logging.getLogger(__name__)
 
@@ -87,6 +89,7 @@ class DeleteReminderTool(BaseTool):
     
     @with_session
     async def execute(self, reminder_id: str, session: Session) -> Dict:
+        logger.info(f"Deleting reminder with ID: {reminder_id}")
         reminder = session.query(Reminder).filter_by(id=reminder_id).first()
         if reminder:
             session.delete(reminder)
@@ -107,6 +110,7 @@ class GetAllRemindersTool(BaseTool):
     
     @with_session
     async def execute(self, session: Session) -> List[Dict]:
+        logger.info("Getting all reminders")
         reminders = session.query(Reminder).all()
         return [{
             "id": r.id,
@@ -126,16 +130,19 @@ class ReminderAgentTool(BaseTool):
     ]
     returns = "Result of action"
 
-    def __init__(self, client: AI_Client):        
-        self.agent = AI_Agent(
+    def on_register(self, parent_agent: Agent):
+        self.parent_agent = parent_agent
+        client = self.parent_agent.client
+        self.agent = Agent(
             client=client,
-            message_storage=AIMessageStorage(), #will be updated AI Agent
-            who_am_i=WHO_AM_I.format(current_time=datetime.now().strftime("%Y-%m-%d %H:%M"))
+            message_storage=MessageStorage(), #will be updated AI Agent
+            who_am_i=WHO_AM_I.format(current_time=datetime.now().strftime("%Y-%m-%d %H:%M")),
+            tools=[
+                CreateReminderTool(), 
+                DeleteReminderTool(), 
+                GetAllRemindersTool()
+            ]
         )
-        
-        self.agent.register_tool(CreateReminderTool())
-        self.agent.register_tool(DeleteReminderTool())
-        self.agent.register_tool(GetAllRemindersTool())
 
     def _get_system_prompt(self) -> str:
         """Get system prompt with current time"""
@@ -146,6 +153,7 @@ class ReminderAgentTool(BaseTool):
         # Update system prompt with current time before each execution
         self.agent.clear_messages()
         self.agent.update_who_am_i(self._get_system_prompt())
+        logger.info(f"Running agent with request: {request}")
         res = await self.agent.run(request)
         return res
 

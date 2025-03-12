@@ -1,10 +1,16 @@
 from pydantic_settings import BaseSettings
+from typing import Optional, Dict, Any
 
 class Settings(BaseSettings):
+    """Базовые настройки фреймворка."""
+    
+    # Database settings
+    DATABASE_URL: str = "sqlite:///AgentForge.db"
     
     class Config:
         env_file = ".env"
-        case_sensitive = True
+        env_file_encoding = "utf-8"
 
-# Создание экземпляра настроек
-settings = Settings()
+
+# Create global settings instance
+settings = Settings() 

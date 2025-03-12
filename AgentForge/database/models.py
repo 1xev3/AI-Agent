@@ -1,7 +1,8 @@
-from sqlalchemy import Column, String, DateTime, Integer, Text
-from .db import Base
+from sqlalchemy import Column, String, DateTime, Integer, Text, Boolean
 from datetime import datetime
 from typing import List
+
+from .db import Base
 from sqlalchemy.orm import Session
 
 class Reminder(Base):
@@ -21,7 +22,8 @@ class TodoItem(Base):
     
     id = Column(String, primary_key=True)
     title = Column(String, nullable=False)
-    description = Column(String, nullable=True)
+    description = Column(Text, nullable=True)
+    completed = Column(Boolean, default=False)
 
 class Message(Base):
     __tablename__ = 'messages'
@@ -30,3 +32,4 @@ class Message(Base):
     user_id = Column(String(255), nullable=False)
     role = Column(String(20), nullable=False)
     content = Column(Text, nullable=False)
+    timestamp = Column(DateTime, default=datetime.now) 

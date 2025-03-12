@@ -8,12 +8,14 @@ import functools
 Base = declarative_base()
 
 class Database:
-    def __init__(self, url: str = 'sqlite:///data.db'):
+    def __init__(self):
         self.engine = None
         self.SessionLocal = None
-        self.url = url
         
-    def init_db(self):
+    def init_db(self, url: str = None):
+        assert url is not None, "Database URL is required"
+        
+        self.url = url
         self.engine = create_engine(self.url)
         self.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=self.engine)
         Base.metadata.create_all(bind=self.engine)
@@ -30,7 +32,8 @@ class Database:
         finally:
             session.close()
 
-# Создаем глобальный экземпляр базы данных
+
+# Create global database instance
 db = Database()
 
 def with_session(func):
@@ -39,4 +42,4 @@ def with_session(func):
     async def wrapper(*args, **kwargs):
         with db.get_session() as session:
             return await func(*args, session=session, **kwargs)
-    return wrapper
+    return wrapper 

@@ -4,8 +4,8 @@ import logging
 from typing import Dict, List, Type, Any, Union
 
 # Local imports
-from .ai_client import AI_Client
-from .ai_message_storage import AIMessageStorage 
+from .client import AIClient
+from .message_storage import MessageStorage 
 from .tool_base import BaseTool
 
 # System prompt template
@@ -30,29 +30,33 @@ To use final answer, respond:
 }}
 Do not respond with both actions and final_answer at the same time!
 If there are no more actions, do not add actions
-Tool results are stored in memory in the format {{"tool": "tool_name", "result": value}}"""
+"""
 
-class AI_Agent:
+class Agent:
     def __init__(
         self,
-        client: AI_Client,
-        message_storage: AIMessageStorage,
+        client: AIClient,
+        message_storage: MessageStorage = None,
+        tools: Dict[str, BaseTool] = None,
         who_am_i: str = "You are an AI assistant",
         max_iterations: int = 20
     ):
         self.who_am_i = who_am_i
         self.tools: Dict[str, BaseTool] = {}
         self.client = client
-        self.message_storage = message_storage or AIMessageStorage(max_size=20)
+        self.message_storage = message_storage or MessageStorage(max_size=20)
         self.max_iterations = max_iterations
 
         self.update_system_prompt(self._create_system_prompt())
 
+        if tools:
+            for tool in tools:
+                self.register_tool(tool)
 
-    def register_tool(self, tool_class: Type[BaseTool]) -> None:
+    def register_tool(self, tool: BaseTool) -> None:
         """Регистрирует новый инструмент."""
-        tool = tool_class
         self.tools[tool.name] = tool
+        tool.on_register(self)
         self.update_system_prompt(self._create_system_prompt())
 
     def update_who_am_i(self, new_prompt: str) -> None:
@@ -153,5 +157,4 @@ class AI_Agent:
             except Exception as e:
                 logging.error(f"Ошибка при выполнении: {str(e)}")
                 self.message_storage.add_message("user", f"Error: {str(e)}")
-                raise e
-                return f"Ошибка при выполнении: {str(e)}" 
+                raise e 

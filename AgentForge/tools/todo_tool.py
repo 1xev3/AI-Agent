@@ -7,9 +7,11 @@ from typing import Dict, List
 from sqlalchemy.orm import Session
 
 # Local imports
-from AI_Agent import BaseTool, ToolParameter, AI_Agent, AI_Client, AIMessageStorage
-from database.db import with_session
-from database.models import TodoItem
+from AgentForge.core.tool_base import BaseTool, ToolParameter
+from AgentForge.core.agent import Agent
+from AgentForge.core.message_storage import MessageStorage
+from AgentForge.database.db import with_session
+from AgentForge.database.models import TodoItem
 
 logger = logging.getLogger(__name__)
 
@@ -172,17 +174,20 @@ class TodoAgentTool(BaseTool):
     description = """Manages TODO list using natural language commands"""
     returns = "Result of action"
 
-    def __init__(self, client: AI_Client):        
-        self.agent = AI_Agent(
+    def on_register(self, parent_agent: Agent):
+        self.parent_agent = parent_agent
+        client = self.parent_agent.client
+        self.agent = Agent(
             client=client,
-            message_storage=AIMessageStorage(), #will be updated AI Agent
-            who_am_i=WHO_AM_I
+            message_storage=MessageStorage(),
+            who_am_i=WHO_AM_I,
+            tools=[
+                CreateTodoTool(), 
+                UpdateTodoTool(), 
+                DeleteTodoTool(), 
+                GetAllTodosTool()
+            ]
         )
-        
-        self.agent.register_tool(CreateTodoTool())
-        self.agent.register_tool(UpdateTodoTool())
-        self.agent.register_tool(DeleteTodoTool())
-        self.agent.register_tool(GetAllTodosTool())
     
     async def execute(self, request: str) -> str:
         return await self.agent.run(request) 
