@@ -12,6 +12,9 @@ from AgentForge.tools import ReminderAgentTool, TodoAgentTool, SearchAgentTool
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+def get_who_am_i():
+    return f"You are an AI assistant. Current time: {datetime.now().strftime('%Y-%m-%d %H:%M')}"
+
 async def main():
     # Initialize the database
     db.init_db(settings.DATABASE_URL)
@@ -21,13 +24,16 @@ async def main():
     client = G4FClient(model="llama-3.1-8b", provider=Blackbox)
     
     # Create a message storage
+    agent_id = "123"
     message_storage = MessageStorage(max_size=20)
+    # message_storage.load_from_db(unique_id, session)
     
     # Create an agent
     agent = Agent(
+        agent_id=agent_id,
         client=client,
         message_storage=message_storage,
-        who_am_i=f"You are an AI assistant. Current time: {datetime.now().strftime('%Y-%m-%d %H:%M')}",
+        who_am_i=get_who_am_i(),
         tools=[
             ReminderAgentTool(), 
             TodoAgentTool(), 
@@ -42,7 +48,7 @@ async def main():
             break
             
         # Update the time in the system prompt
-        agent.update_who_am_i(f"You are an AI assistant. Current time: {datetime.now().strftime('%Y-%m-%d %H:%M')}")
+        agent.update_who_am_i(get_who_am_i())
         
         # Start the agent
         result = await agent.run(user_input)

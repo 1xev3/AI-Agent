@@ -57,9 +57,11 @@ class CreateTodoTool(BaseTool):
     @with_session
     async def execute(self, title: str, description: str, session: Session) -> Dict:
         todo_id = f"todo_{uuid.uuid4().hex[:8]}"
+        agent_id = self.parent_agent.get_id()
         
         todo = TodoItem(
             id=todo_id,
+            agent_id=agent_id,
             title=title,
             description=description
         )
@@ -96,7 +98,8 @@ class UpdateTodoTool(BaseTool):
     
     @with_session
     async def execute(self, todo_id: str, title: str, description: str, session: Session) -> Dict:
-        todo = session.query(TodoItem).filter_by(id=todo_id).first()
+        agent_id = self.parent_agent.get_id()
+        todo = session.query(TodoItem).filter_by(id=todo_id, agent_id=agent_id).first()
         if todo:
             todo.title = title
             todo.description = description
@@ -131,7 +134,8 @@ class DeleteTodoTool(BaseTool):
     
     @with_session
     async def execute(self, todo_id: str, session: Session) -> Dict:
-        todo = session.query(TodoItem).filter_by(id=todo_id).first()
+        agent_id = self.parent_agent.get_id()
+        todo = session.query(TodoItem).filter_by(id=todo_id, agent_id=agent_id).first()
         if todo:
             title = todo.title
             session.delete(todo)
@@ -154,7 +158,8 @@ class GetAllTodosTool(BaseTool):
     
     @with_session
     async def execute(self, session: Session) -> List[Dict]:
-        todos = session.query(TodoItem).all()
+        agent_id = self.parent_agent.get_id()
+        todos = session.query(TodoItem).filter_by(agent_id=agent_id).all()
         logger.info(f"Todos retrieved: {len(todos)}")
         return [{
             "id": t.id,
@@ -175,10 +180,10 @@ class TodoAgentTool(BaseTool):
     returns = "Result of action"
 
     def on_register(self, parent_agent: Agent):
-        self.parent_agent = parent_agent
-        client = self.parent_agent.client
+        client = parent_agent.client
         self.agent = Agent(
             client=client,
+            agent_id=parent_agent.get_id(),
             message_storage=MessageStorage(),
             who_am_i=WHO_AM_I,
             tools=[

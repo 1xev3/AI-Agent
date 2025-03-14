@@ -56,10 +56,10 @@ class MessageStorage:
         msg_storage.messages = self.messages.copy()
         return msg_storage
     
-    def load_from_db(self, user_id: str, session: Session):
+    def load_from_db(self, unique_id: str, session: Session):
         # Implement loading from database
         pass
 
-    def save_to_db(self, user_id: str, session: Session):
+    def save_to_db(self, unique_id: str, session: Session):
         # Implement saving to database
         pass 

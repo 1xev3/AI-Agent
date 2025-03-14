@@ -35,17 +35,19 @@ If there are no more actions, do not add actions
 class Agent:
     def __init__(
         self,
+        agent_id: str,
         client: AIClient,
         message_storage: MessageStorage = None,
         tools: Dict[str, BaseTool] = None,
         who_am_i: str = "You are an AI assistant",
-        max_iterations: int = 20
+        max_iterations: int = 20,
     ):
         self.who_am_i = who_am_i
         self.tools: Dict[str, BaseTool] = {}
         self.client = client
         self.message_storage = message_storage or MessageStorage(max_size=20)
         self.max_iterations = max_iterations
+        self.agent_id = agent_id
 
         self.update_system_prompt(self._create_system_prompt())
 
@@ -53,10 +55,18 @@ class Agent:
             for tool in tools:
                 self.register_tool(tool)
 
+    def get_id(self) -> str:
+        """Returns the agent's ID."""
+        return self.agent_id
+    
+    def set_id(self, new_id: str) -> None:
+        """Sets the agent's ID."""
+        self.agent_id = new_id
+
     def register_tool(self, tool: BaseTool) -> None:
-        """Регистрирует новый инструмент."""
+        """Registers a new tool."""
         self.tools[tool.name] = tool
-        tool.on_register(self)
+        tool._register_internal(self)
         self.update_system_prompt(self._create_system_prompt())
 
     def update_who_am_i(self, new_prompt: str) -> None:
@@ -72,8 +82,8 @@ class Agent:
         """Updates system prompt and reinitializes the agent"""
         self.message_storage.update_system_prompt(new_prompt)
 
-    def _create_tool_description(self) -> str:
-        """Создает описание доступных инструментов для промпта."""
+    def _create_all_tools_description(self) -> str:
+        """Creates a description of available tools for the prompt."""
         tools_desc = []
         for tool in self.tools.values():
             tool_info = tool.to_string()
@@ -81,12 +91,12 @@ class Agent:
         return "\n".join(tools_desc)
     
     def clear_memory(self) -> None:
-        """Очищает память агента."""
+        """Clears the agent's memory."""
         self.message_storage.clear_messages()
         
     def update_memory(self, role: str, content: Union[str, Dict, List, Any]) -> None:
-        """Обновляет память агента."""
-        if content is None:  # Пропускаем пустые сообщения
+        """Updates the agent's memory."""
+        if content is None:  # Skip empty messages
             return
         self.message_storage.add_message(role, content)
         
@@ -94,7 +104,7 @@ class Agent:
         """Creates system prompt with tools description."""
         return SYSTEM_PROMPT_TEMPLATE.format(
             who_am_i=self.who_am_i,
-            tools_description=self._create_tool_description()
+            tools_description=self._create_all_tools_description()
         )
         
     async def _execute_tool_call(self, tool_call: Dict) -> Any:

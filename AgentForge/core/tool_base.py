@@ -50,6 +50,15 @@ class BaseTool(ABC):
     async def execute(self, **kwargs) -> Any:
         """Execute tool with given parameters."""
         pass
+
+    def _register_internal(self, parent_agent):
+        """Called when the tool is registered in the agent"""
+        self.parent_agent = parent_agent
+        self.on_register(parent_agent)
+
+    def get_parent_agent(self):
+        """Returns the parent agent."""
+        return self.parent_agent
     
     def on_register(self, parent_agent):
         """Called when the tool is registered in the agent"""

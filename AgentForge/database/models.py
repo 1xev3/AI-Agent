@@ -9,6 +9,8 @@ class Reminder(Base):
     __tablename__ = 'reminders'
     
     id = Column(String, primary_key=True)
+    agent_id = Column(String, nullable=False) # For agent identification
+    
     text = Column(String, nullable=False)
     reminder_time = Column(DateTime, nullable=False)
     
@@ -21,15 +23,8 @@ class TodoItem(Base):
     __tablename__ = 'todos'
     
     id = Column(String, primary_key=True)
+    agent_id = Column(String, nullable=False) # For agent identification
+
     title = Column(String, nullable=False)
     description = Column(Text, nullable=True)
     completed = Column(Boolean, default=False)
-
-class Message(Base):
-    __tablename__ = 'messages'
-
-    id = Column(Integer, primary_key=True)
-    user_id = Column(String(255), nullable=False)
-    role = Column(String(20), nullable=False)
-    content = Column(Text, nullable=False)
-    timestamp = Column(DateTime, default=datetime.now) 

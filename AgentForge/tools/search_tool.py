@@ -89,9 +89,6 @@ class GetPageContentTool(BaseTool):
     def __init__(self, ai_summarize: bool = True):
         self.ai_summarize = ai_summarize
 
-    def on_register(self, parent_agent: Agent):
-        self.parent_agent = parent_agent
-
     async def execute(self, url: str, max_chars: int = 10000) -> Dict:
         logger.info(f"Getting page content from: {url}")
         try:
@@ -164,10 +161,10 @@ class SearchAgentTool(BaseTool):
     returns = "Search results and analysis"
 
     def on_register(self, parent_agent: Agent):
-        self.parent_agent = parent_agent
-        client = self.parent_agent.client
+        client = parent_agent.client
         self.agent = Agent(
             client=client,
+            agent_id=parent_agent.get_id(),
             message_storage=MessageStorage(),
             who_am_i=WHO_AM_I,
             tools=[

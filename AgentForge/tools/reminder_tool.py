@@ -58,11 +58,13 @@ class CreateReminderTool(BaseTool):
     
     @with_session
     async def execute(self, text: str, date_time_str: str, session: Session) -> Dict:
-        reminder_id = f"rem_{uuid.uuid4().hex[:8]}"  # Увеличили длину ID для уникальности
+        reminder_id = f"rem_{uuid.uuid4().hex[:8]}"
+        agent_id = self.parent_agent.get_id()
         reminder_time = datetime.strptime(date_time_str, "%Y-%m-%d %H:%M")
         
         reminder = Reminder(
             id=reminder_id,
+            agent_id=agent_id,
             text=text,
             reminder_time=reminder_time
         )
@@ -89,8 +91,9 @@ class DeleteReminderTool(BaseTool):
     
     @with_session
     async def execute(self, reminder_id: str, session: Session) -> Dict:
+        agent_id = self.parent_agent.get_id()
         logger.info(f"Deleting reminder with ID: {reminder_id}")
-        reminder = session.query(Reminder).filter_by(id=reminder_id).first()
+        reminder = session.query(Reminder).filter_by(id=reminder_id, agent_id=agent_id).first()
         if reminder:
             session.delete(reminder)
             return {
@@ -131,10 +134,10 @@ class ReminderAgentTool(BaseTool):
     returns = "Result of action"
 
     def on_register(self, parent_agent: Agent):
-        self.parent_agent = parent_agent
-        client = self.parent_agent.client
+        client = parent_agent.client
         self.agent = Agent(
             client=client,
+            agent_id=parent_agent.get_id(),
             message_storage=MessageStorage(), #will be updated AI Agent
             who_am_i=WHO_AM_I.format(current_time=datetime.now().strftime("%Y-%m-%d %H:%M")),
             tools=[
