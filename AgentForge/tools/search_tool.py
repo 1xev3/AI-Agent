@@ -1,9 +1,7 @@
 # Standard library imports
 import logging
-import asyncio
-from typing import Dict, List, Optional
-from urllib.parse import urlparse
-from pprint import pformat
+from typing import Dict, List
+from datetime import datetime
 
 # Third party imports
 from bs4 import BeautifulSoup
@@ -17,7 +15,7 @@ from AgentForge.core.message_storage import MessageStorage
 
 logger = logging.getLogger(__name__)
 
-WHO_AM_I = """You are an internet search assistant.
+WHO_AM_I = """You are an internet search assistant. Current time: {time}
 
 For searching:
 1. Search the internet using search_internet tool to find relevant pages
@@ -127,7 +125,7 @@ class GetPageContentTool(BaseTool):
                     if len(text) > max_chars:
                         text = text[:max_chars] + "..."
 
-                    if len(text) < 100:
+                    if len(text) < 20:
                         logger.warning(f"Page content is too short.")
                         return {"success": True, "content": "Nothing useful found", "url": url}
 
@@ -160,13 +158,16 @@ class SearchAgentTool(BaseTool):
     ]
     returns = "Search results and analysis"
 
+    def get_who_am_i(self):
+        return WHO_AM_I.format(time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
     def on_register(self, parent_agent: Agent):
         client = parent_agent.client
         self.agent = Agent(
             client=client,
             agent_id=parent_agent.get_id(),
             message_storage=MessageStorage(),
-            who_am_i=WHO_AM_I,
+            who_am_i=self.get_who_am_i(),
             tools=[
                 SearchInternetTool(), 
                 GetPageContentTool()
@@ -175,6 +176,7 @@ class SearchAgentTool(BaseTool):
 
     async def execute(self, request: str) -> str:
         logger.info(f"Running agent with request: {request}")
+        self.agent.update_who_am_i(self.get_who_am_i())
         result = await self.agent.run(request) 
         # logger.info(f"Agent result: { pformat(self.agent.message_storage.get_messages_as_dict())}")
         return result
